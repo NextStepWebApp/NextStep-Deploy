@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# funtion with all the variables that are handed over from 0-preinstall.sh
+# Function with all the variables that are handed over from 0-preinstall.sh
 source /usr/local/share/Archinstaller/scripts/vars.sh
 source /usr/local/share/Archinstaller/scripts/config.sh
-
 
 installpackage() {
     local pkgs="$@"
@@ -18,37 +17,33 @@ installpackage() {
     done
 }
 
-# bios setup function
+# BIOS setup function
 biossetup() {
+    # mkinitcpio
+    sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
 
-# mkinitcpio
-sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
+    # generate
+    mkinitcpio -P
 
-# generate
-mkinitcpio -P
+    # installing grub
+    installpackage grub
 
-# installing grub
-installpackage grub
+    # Disable submenu's good for multiple kernels
+    sed -i 's/^#GRUB_DISABLE_SUBMENU=/GRUB_DISABLE_SUBMENU=/' /etc/default/grub
+    sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub
 
-# Disable submenu's good for multiple kernels
-sed -i 's/^#GRUB_DISABLE_SUBMENU=/GRUB_DISABLE_SUBMENU=/' /etc/default/grub
-
-sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub
-
-grub-install --target=i386-pc ${DISK}
-grub-mkconfig -o /boot/grub/grub.cfg
+    grub-install --target=i386-pc ${DISK}
+    grub-mkconfig -o /boot/grub/grub.cfg
 }
 
-# efi setup function
+# EFI setup function
 efisetup() {
+    # mkinitcpio setup
+    sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
 
-# mkinitcpio setup
-sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-
-# .preset files
-# mkinitcpio preset file for the 'linux-lts' package
-
-cat > /etc/mkinitcpio.d/linux-lts.preset <<'EOF'
+    # .preset files
+    # mkinitcpio preset file for the 'linux-lts' package
+    cat > /etc/mkinitcpio.d/linux-lts.preset <<'EOF'
 ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux-lts"
 
@@ -59,20 +54,20 @@ default_uki="/efi/EFI/Linux/arch-linux-lts.efi"
 fallback_uki="/efi/EFI/Linux/arch-linux-lts-fallback.efi"
 fallback_options="-S autodetect"
 EOF
-fi
 
-# installing boot loader
-bootctl install
+    # installing boot loader
+    bootctl install
 
-cat > /efi/loader/loader.conf <<'EOF'
+    cat > /efi/loader/loader.conf <<'EOF'
 default arch-linux-lts.efi
 timeout 5
 console-mode auto
 editor no
 EOF
 
-systemctl enable systemd-boot-update.service
-echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
+    systemctl enable systemd-boot-update.service
+    echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
+}
 
 clear
 
@@ -93,7 +88,7 @@ echo -ne "
 "
 
 if [[ $(whoami) = "root" ]]; then
-    # use chpasswd to enter $USERNAME:$password
+    # use chpasswd to enter root password
     echo "$(whoami):${password}" | chpasswd
     echo "$(whoami) password set"
 fi
@@ -126,7 +121,6 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
-#sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 sed -i "s/^#${localization}/${localization}/" /etc/locale.gen
 
 locale-gen
@@ -134,7 +128,6 @@ locale-gen
 language=$(echo "$localization" | awk '{print $1}')
 
 echo "LANG=$language" > /etc/locale.conf
-
 
 # installing tty font package
 pacman -S terminus-font --noconfirm --needed
@@ -160,13 +153,16 @@ echo -ne "
  Configure mkinitcpio & Configure the kernel cmdline & .preset file & Installing the bootloader
 ------------------------------------------------------------------------------------------------
 "
-if [[ $platform == "EFI" ]]; then
-    # efi setup funtion (function above of the page)
-    efisetup
 
+if [[ $platform == "EFI" ]]; then
+    # efi setup function
+    efisetup
 elif [[ $platform == "BIOS" ]]; then
-    # Bios setup funtion (function above of the page)
+    # Bios setup function
     biossetup
+else
+    echo "ERROR: Unknown platform"
+    exit 1
 fi
 
 echo "Finished 1-preinstall.sh"
