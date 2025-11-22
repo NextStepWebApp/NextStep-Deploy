@@ -3,11 +3,11 @@
 
 echo -ne "
 -------------------------------------------------------------------------
-                Setting up username and password
+                      Setting up keyboard layout
 -------------------------------------------------------------------------
 "
 
-echo "Please select key board layout from this list"
+echo "Please select keyboard layout from this list"
 echo ""
 
 options=(us by ca cf cz de dk es et fa fi fr gr hu il it lt lv mk nl no pl ro ru sg ua uk)
@@ -45,9 +45,17 @@ loadkeys ${key_layout}
 # username
 username="admin"
 
+clear 
+
+echo -ne "
+-------------------------------------------------------------------------
+                         Setting up Password
+-------------------------------------------------------------------------
+"
+
 # Set a user password
 while true; do
-    read -s -p "Please enter user password: " password
+    read -s -p "Please enter a password: " password
     echo ""
     if (( ${#password} < 2 )); then
         echo "Password must be at least 2 characters"
@@ -59,13 +67,15 @@ while true; do
         echo "Password setup success"
         break
     else
-        echo "User passwords do not match. Try again."
+        echo "Passwords do not match. Try again."
     fi
 done
 
 # Set hostname
 
 name_of_machine="nextstepserver"
+
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -166,7 +176,6 @@ echo -ne "
                         INSTALLATION CONFIRMATION
 -------------------------------------------------------------------------
 "
-sleep 1
 echo -ne "
 Please review your installation configuration:
 
