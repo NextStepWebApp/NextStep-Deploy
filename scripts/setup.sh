@@ -43,14 +43,8 @@ done
 # load the keyboard layout
 loadkeys ${key_layout}
 
-echo -ne "
--------------------------------------------------------------------------
-                Setting up username and password
--------------------------------------------------------------------------
-"
-# Tell the username
-echo "Your username is: admin"
-$username = "admin"
+# username
+username="admin"
 
 # Set a user password
 while true; do
@@ -69,14 +63,6 @@ while true; do
         echo "User passwords do not match. Try again."
     fi
 done
-
-
-echo -ne "
--------------------------------------------------------------------------
-                        Setting hostname
--------------------------------------------------------------------------
-"
-echo "Yout host name is: nextstepserver"
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -135,23 +121,16 @@ echo ""
         echo "Timezone selected: $timezone"
 fi
 
-"
--------------------------------------------------------------------------
-                    Checking firmware platform
--------------------------------------------------------------------------
-"
+
+# Checking Firmware
 if [[ -f /sys/firmware/efi/fw_platform_size ]]; then
     EFI_SIZE=$(cat /sys/firmware/efi/fw_platform_size)
-    echo "EFI platform size detected: $EFI_SIZE-bit"
-    if [[ $EFI_SIZE != "64" ]]; then
-        echo "Not tested yet"
-    fi
     platform=EFI
 else
-    echo "BIOS firmware detected"
     platform=BIOS
 fi
 
+clear
 echo -ne "
 -------------------------------------------------------------------------
                     Formatting the disk
@@ -204,27 +183,6 @@ while true; do
 done
 
 # Store variables for later use
-echo -ne "
--------------------------------------------------------------------------
-                    Storing configuration variables
--------------------------------------------------------------------------
-"
-
-# Set partition names again for UUID collection and for bios partition collection
-if [[ "${DISK}" =~ "nvme" || "${DISK}" =~ "mmcblk" ]]; then
-    partition1=${DISK}p1
-    partition2=${DISK}p2
-    if [[ $platform == "BIOS" ]]; then
-        partition3=${DISK}p3
-    fi
-
-else
-    partition1=${DISK}1
-    partition2=${DISK}2
-    if [[ $platform == "BIOS" ]]; then
-        partition3=${DISK}3
-    fi
-fi
 
 cat > scripts/vars.sh << EOF
 # Archinstaller configuration variables
