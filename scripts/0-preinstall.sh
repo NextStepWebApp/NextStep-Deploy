@@ -3,6 +3,7 @@
 source scripts/vars.sh
 
 installcleanup() {
+    clear
     echo "Cleaning up and cancelling installation..."
     # Unmount all mounted filesystems
     umount -R /mnt 2>/dev/null
@@ -44,12 +45,7 @@ calculatelvm() {
 }
 
 set_partition_names() {
-    # Wait for partition table to be recognized
-    sleep 2
-    partprobe ${DISK}
-    sleep 1
-    
-    # Get partition names dynamically based on disk type
+    # Get partition names based on disk type
     if [[ ${DISK} =~ "nvme" ]]; then
         # NVMe drives use p1, p2, p3 format
         partition1="${DISK}p1"
@@ -68,27 +64,19 @@ set_partition_names() {
     else
         LVM_DEVICE="${partition2}"
     fi
-    
-    echo "Partition 1: ${partition1}"
-    echo "Partition 2: ${partition2}"
-    if [[ $platform == "BIOS" ]]; then
-        echo "Partition 3: ${partition3}"
-    fi
-    echo "LVM Device: ${LVM_DEVICE}"
 }
 
 setup_lvm() {
-    echo "Setting up LVM..."
     # Create LVM setup
-    pvcreate ${LVM_DEVICE}
-    vgcreate archvolume ${LVM_DEVICE}
+    pvcreate $LVM_DEVICE
+    vgcreate archvolume $LVM_DEVICE
     lvcreate -L ${SWAP_SIZE}G -n swap archvolume
     lvcreate -L ${ROOT_SIZE}G -n root archvolume
     lvcreate -l 100%FREE -n home archvolume
-    echo "LVM setup complete"
 }
 
 create_filesystems() {
+    clear
     echo -ne "
 -------------------------------------------------------------------------
                     Creating filesystems
@@ -101,22 +89,18 @@ create_filesystems() {
      
     # Reduce home partition by 256M to leave some free space
     lvreduce -L -256M --resizefs archvolume/home
-    echo "Filesystems created successfully"
 }
 
 mount_common_filesystems() {
-    echo "Mounting filesystems..."
     # Mount the filesystems
     mount /dev/mapper/archvolume-root /mnt
-    mkdir -p /mnt/home
+    mkdir /mnt/home
     mount /dev/mapper/archvolume-home /mnt/home
     swapon /dev/mapper/archvolume-swap
-    echo "Filesystems mounted"
 }
 
-# Function that formats the disk for an EFI firmware system
+# function that formats the disk for a EFI firmware system
 efisetup() {
-    echo "Starting EFI setup..."
     calculatelvm
     set_partition_names
     setup_lvm
@@ -124,94 +108,68 @@ efisetup() {
     mount_common_filesystems
 
     # Setup EFI partition
-    echo "Setting up EFI partition..."
     mkfs.fat -F32 ${partition1}
-    mkdir -p /mnt/efi
+    mkdir /mnt/efi
     mount ${partition1} /mnt/efi
-    echo "EFI setup complete"
 }
 
-# Function that formats the disk for a BIOS firmware system
+# function that formats the disk for a BIOS firmware system
 biossetup() {
-    echo "Starting BIOS setup..."
     calculatelvm
     set_partition_names
     setup_lvm
     create_filesystems
     mount_common_filesystems
 
-    # Setup BIOS boot partition
-    echo "Setting up boot partition..."
+    # Setup BIOS partition
     mkfs.fat -F32 ${partition2}
-    mkdir -p /mnt/boot
+    mkdir /mnt/boot
     mount ${partition2} /mnt/boot
-    echo "BIOS setup complete"
 }
-
-echo -ne "
--------------------------------------------------------------------------
-                    Partitioning the disk
--------------------------------------------------------------------------
-"
 
 # Getting rid of everything
 umount -A --recursive /mnt 2>/dev/null
-
-# Wipe disk signatures
-wipefs -af ${DISK}
 sgdisk -Z ${DISK}
 sgdisk -a 2048 -o ${DISK}
 
 # Create partitions based on platform
 if [[ $platform == "EFI" ]]; then
-    echo "Creating EFI partition layout..."
     sgdisk -n 1::+3G --typecode=1:ef00 --change-name=1:'EFIBOOT' ${DISK}
     sgdisk -n 2::-0 --typecode=2:8300 --change-name=2:'ROOT' ${DISK}
     partprobe ${DISK}
-    sleep 2
     efisetup
 elif [[ $platform == "BIOS" ]]; then
-    echo "Creating BIOS partition layout..."
     sgdisk -n 1::+2M --typecode=1:ef02 --change-name=1:'BIOSBOOT' ${DISK}
     sgdisk -n 2::+1G --typecode=2:8300 --change-name=2:'BOOT' ${DISK}
     sgdisk -n 3::-0 --typecode=3:8300 --change-name=3:'ROOT' ${DISK}
     sgdisk -A 1:set:2 ${DISK}
     partprobe ${DISK}
-    sleep 2
     biossetup
 else
     echo "ERROR: Unknown platform, exiting..."
     exit 1
 fi
 
-echo -ne "
--------------------------------------------------------------------------
-                    Partition layout complete
--------------------------------------------------------------------------
-"
+# If something did not go right you need to be able to rerun the script
+# Confirmation step
 
-# Show final partition layout
-lsblk ${DISK}
-echo ""
-
-# Confirmation step - allow user to cancel after seeing the result
 while true; do
-    read -p "Does the partition layout look correct? Continue (y/n): " answer
+    lsblk
+    read -p "Continue (y/n): " answer
     if [[ $answer == "y" || $answer == "Y" ]]; then
-        echo "Continuing with installation..."
         break
     elif [[ $answer == "n" || $answer == "N" ]]; then
         installcleanup
-    else
-        echo "Please enter 'y' or 'n'"
     fi
 done
 
-# Copy installation scripts to the new system
-echo "Copying installation scripts..."
+# done with disk setup
+
 mkdir -p /mnt/usr/local/share/Archinstaller
 cp -r "$SCRIPT_DIR"/* /mnt/usr/local/share/Archinstaller/
 chmod +x /mnt/usr/local/share/Archinstaller/scripts/*
+
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -219,11 +177,13 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 timedatectl set-ntp true
-timedatectl status
+timedatectl
+
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
-                    Selecting the mirrors
+                       Selecting the mirrors
 -------------------------------------------------------------------------
 "
 echo "Updating mirrors with reflector..."
@@ -238,55 +198,42 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
-packages="base base-devel bash linux-firmware linux-lts lvm2 networkmanager vim man-db man-pages texinfo"
+packages="base bash linux-firmware linux-lts lvm2 networkmanager vim man-db man-pages texinfo"
 
 # Add EFI boot manager if needed
 if [[ $platform == "EFI" ]]; then
     packages+=" efibootmgr"
 fi
 
-# Install packages with retry logic
-attempt=1
-max_attempts=3
 while true; do
-    echo "Installation attempt ${attempt}/${max_attempts}..."
-    if pacstrap -K /mnt --noconfirm --needed ${packages}; then
-        echo "Package installation successful"
-        break
-    else
+    if ! pacstrap -K /mnt --noconfirm --needed ${packages}; then
         echo "ERROR: Package installation failed"
-        if [[ $attempt -ge $max_attempts ]]; then
-            echo "Maximum attempts reached. Installation failed."
-            installcleanup
-        fi
-        echo "Retrying in 5 seconds..."
-        sleep 5
-        ((attempt++))
+        echo "Try again.."
+    else
+        echo "Success"
+        break
     fi
 done
 
+clear
+
 echo -ne "
 -------------------------------------------------------------------------
-                    Configuring the system
+                      Configuring the system
 -------------------------------------------------------------------------
 "
 
-# Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# Fix mount options for boot partitions
 if [[ $platform == "EFI" ]]; then
     echo "Fixing EFI mount boot options in fstab..."
     sed -i '/\/efi/ s/fmask=[0-9]\{4\}/fmask=0137/; s/dmask=[0-9]\{4\}/dmask=0027/' /mnt/etc/fstab
+
 elif [[ $platform == "BIOS" ]]; then
     echo "Fixing BIOS mount boot options in fstab..."
     sed -i '/\/boot/ s/fmask=[0-9]\{4\}/fmask=0137/; s/dmask=[0-9]\{4\}/dmask=0027/' /mnt/etc/fstab
+else
+    echo "error.. no valid platform"
 fi
-
-# Display the generated fstab for verification
-echo ""
-echo "Generated fstab:"
-cat /mnt/etc/fstab
-echo ""
 
 echo "Finished 0-preinstall.sh"
