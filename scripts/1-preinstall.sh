@@ -22,38 +22,19 @@ installpackage() {
 biossetup() {
 
 # mkinitcpio
-if [[ $disk_encrypt = 'y' ]]; then
-    pacman -S cryptsetup --noconfirm --needed
-    sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-else
-    sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-fi
+sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
 
 # generate
 mkinitcpio -P
 
 # installing grub
-installpackage grub os-prober
-
-# Setting up grub settings
-
-# Detecting other operating systems (This is handy if the user has multiple disks on his bios computer)
-echo 'GRUB_DISABLE_OS_PROBER=false' >> /etc/default/grub
+installpackage grub
 
 # Disable submenu's good for multiple kernels
 sed -i 's/^#GRUB_DISABLE_SUBMENU=/GRUB_DISABLE_SUBMENU=/' /etc/default/grub
 
-sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=2/' /etc/default/grub
+sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub
 
-# Check if the disk is encrypted
-if [[ $disk_encrypt = 'y' ]]; then
-    # 1. Force enable cryptodisk
-    sed -i 's/^#\?GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
-
-    # 2. Append to GRUB_CMDLINE_LINUX_DEFAULT instead of overwriting
-    sed -i "s%GRUB_CMDLINE_LINUX_DEFAULT=\"%GRUB_CMDLINE_LINUX_DEFAULT=\"cryptdevice=UUID=${LUKS_UUID}:cryptlvm root=/dev/archvolume/root %g" /etc/default/grub
-
-fi
 grub-install --target=i386-pc ${DISK}
 grub-mkconfig -o /boot/grub/grub.cfg
 }
@@ -62,35 +43,11 @@ grub-mkconfig -o /boot/grub/grub.cfg
 efisetup() {
 
 # mkinitcpio setup
-if [[ $disk_encrypt = 'y' ]]; then
-    pacman -S cryptsetup --noconfirm --needed
-    sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-else
-    sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-fi
+sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
 
 # .preset files
-if [[ $de_choice != "SERVER" ]]; then
-cat > /etc/mkinitcpio.d/linux.preset <<'EOF'
-# mkinitcpio preset file for the 'linux' package
-ALL_config="/etc/mkinitcpio.conf"
-ALL_kver="/boot/vmlinuz-linux"
-
-PRESETS=('default')
-
-default_uki="/efi/EFI/Linux/arch-linux.efi"
-EOF
-
-cat > /etc/mkinitcpio.d/linux-lts.preset <<'EOF'
 # mkinitcpio preset file for the 'linux-lts' package
-ALL_config="/etc/mkinitcpio.conf"
-ALL_kver="/boot/vmlinuz-linux-lts"
 
-PRESETS=('default')
-
-default_uki="/efi/EFI/Linux/arch-linux-lts.efi"
-EOF
-else
 cat > /etc/mkinitcpio.d/linux-lts.preset <<'EOF'
 ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux-lts"
@@ -104,37 +61,18 @@ fallback_options="-S autodetect"
 EOF
 fi
 
-
 # installing boot loader
-
 bootctl install
 
-if [[ $de_choice == "SERVER" ]]; then
 cat > /efi/loader/loader.conf <<'EOF'
 default arch-linux-lts.efi
 timeout 5
 console-mode auto
 editor no
 EOF
-else
-cat > /efi/loader/loader.conf <<'EOF'
-default arch-linux.efi
-timeout 5
-console-mode auto
-editor no
-EOF
-fi
 
 systemctl enable systemd-boot-update.service
-
-# Check if the disk in enqrypted
-if [[ $disk_encrypt = 'y' ]]; then
-    echo "rd.luks.name=${LUKS_UUID}=cryptlvm root=/dev/archvolume/root rw" > /etc/kernel/cmdline
-else
-    echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
-fi
-
-}
+echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
 
 clear
 
@@ -156,7 +94,7 @@ echo -ne "
 
 if [[ $(whoami) = "root" ]]; then
     # use chpasswd to enter $USERNAME:$password
-    echo "$(whoami):${root_password}" | chpasswd
+    echo "$(whoami):${password}" | chpasswd
     echo "$(whoami) password set"
 fi
 
