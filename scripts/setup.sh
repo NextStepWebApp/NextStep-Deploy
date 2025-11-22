@@ -1,12 +1,5 @@
 #!/bin/bash
-
-# nog op werken
-#source config.sh
-
-
-
 # This script only gets information from the user, this information will be stored and used in the other scripts
-
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -55,16 +48,9 @@ echo -ne "
                 Setting up username and password
 -------------------------------------------------------------------------
 "
-
-while true; do
-	read -p "Please enter username: " username
-	if [[ "${username,,}" =~ ^[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}\$)$ ]]; then
-		break
-	fi
-	    echo "Incorrect username."
-done
-
-echo ""
+# Tell the username
+echo "Your username is: admin"
+$username = "admin"
 
 # Set a user password
 while true; do
@@ -84,37 +70,13 @@ while true; do
     fi
 done
 
-echo ""
-
-# Set a root password
-while true; do
-    read -s -p "Please enter root password: " root_password
-    echo ""
-    if (( ${#password} < 2 )); then
-           continue
-    fi
-    read -s -p "Confirm password: " password_confirm
-    if [[ "$root_password" == "$password_confirm" ]]; then
-        echo ""
-        echo "Password root setup success"
-        break
-    else
-        echo ""
-        echo "Root passwords do not match. Try again."
-    fi
-done
 
 echo -ne "
 -------------------------------------------------------------------------
                         Setting hostname
 -------------------------------------------------------------------------
 "
-while true; do
-	read -p "Please name your machine: " name_of_machine
-	if [[ "${name_of_machine,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]; then
-		break
-	fi
-done
+echo "Yout host name is: nextstepserver"
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -122,6 +84,8 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
+# I know, a url !!!! Oh no!!! 
+# Chill out this is a api to get yout timezone based of you ip
 timezone="$(curl --fail https://ipapi.co/timezone)"
 
 read -p "Is this your timezone? ${timezone} (y/n) " anwser
@@ -171,143 +135,16 @@ echo ""
         echo "Timezone selected: $timezone"
 fi
 
-
-echo -ne "
--------------------------------------------------------------------------
-                        Chose your DE or server
--------------------------------------------------------------------------
 "
-echo "Please select a option:"
-echo "1) KDE Plasma"
-echo "2) GNOME"
-echo "3) XFCE"
-echo "4) Server"
-echo "5) Minimal"
-echo ""
-echo "Default is Minimal (press Enter for default)"
-read -p "Enter your choice [1-5]: " de_choice
-
-# Set default if empty
-if [[ -z "$de_choice" ]]; then
-    de_choice=5
-fi
-
-case $de_choice in
-    1)
-        echo "KDE Plasma setup"
-        de_choice=KDE
-        ;;
-    2)
-        echo "GNOME setup"
-        de_choice=GNOME
-        ;;
-    3)
-        echo "XFCE setup"
-        de_choice=XFCE
-        ;;
-    4)
-        echo "Server setup"
-        de_choice=SERVER
-        ;;
-    5)
-        echo "Minimal setup"
-        de_choice=MIN
-        ;;
-    *)
-        echo "Invalid choice. Setting up minimal setup"
-        de_choice=MIN
-        ;;
-
-esac
-
-echo -ne "
--------------------------------------------------------------------------
-                           Hibernation
--------------------------------------------------------------------------
-"
-while true; do
-read -p "Will you hibernate your computer? (y/n): " hibernate
-if [[ $hibernate == "y" || $hibernate == "Y" ]]; then
-    hibernate="YES"
-    break
-elif [[ $hibernate == "n" || $hibernate == "N" ]]; then
-    hibernate="NO"
-    break
-else
-    echo "Enter a vaild input"
-fi
-done
-
-# filesystem choice for server setup
-if [[ $de_choice == "SERVER" ]]; then
-echo -ne "
--------------------------------------------------------------------------
-                              Server filesystem
--------------------------------------------------------------------------
-"
-    echo "XFS: large files, big data, or servers where performance and scalability matter more than shrinkability."
-    echo "EXT4: general-purpose servers, small web apps, and situations where simplicity and reliability matter."
-    echo "Please select a option:"
-    echo "1) XFS"
-    echo "2) EXT4"
-    echo "Default is XFS (press Enter for default)"
-    read -p "Enter your choice [1-2]: " server_file
-
-    # Set default if empty
-    if [[ -z "$server_file" ]]; then
-        server_file=1
-    fi
-
-    case $server_file in
-        1)
-            echo "Setting up XFS filesytem"
-            server_file=XFS
-            ;;
-        2)
-            echo "Setting up EXT4 filesytem"
-            server_file=EXT4
-            ;;
-        *)
-            echo "Setting up default: XFS filesytem"
-            server_file=XFS
-            ;;
-    esac
-fi
-
-gpu_type=$(lspci)
-if grep -E "NVIDIA|GeForce" <<< ${gpu_type}; then
-    echo "NVIDIA GPU DETECTED"
-
-    while true; do
-        read -p "Install proprietary NVIDIA drivers? (y/n): " nvidia_choice
-
-        if [[ $nvidia_choice == "y" || $nvidia_choice == "Y" ]]; then
-            echo "Setting up NVIDIA proprietary drivers..."
-            nvidia_install=y
-            break
-        elif [[ $nvidia_choice == "n" || $nvidia_choice == "N" ]]; then
-            echo "Skipping NVIDIA drivers (using open-source/integrated graphics)"
-            nvidia_install=n
-            break
-        else
-            echo "Enter a valid input"
-        fi
-    done
-fi
-
-
-echo -ne "
 -------------------------------------------------------------------------
                     Checking firmware platform
 -------------------------------------------------------------------------
 "
-
 if [[ -f /sys/firmware/efi/fw_platform_size ]]; then
     EFI_SIZE=$(cat /sys/firmware/efi/fw_platform_size)
     echo "EFI platform size detected: $EFI_SIZE-bit"
     if [[ $EFI_SIZE != "64" ]]; then
-        echo "Not supported exiting..."
-        exit 1
+        echo "Not tested yet"
     fi
     platform=EFI
 else
@@ -320,7 +157,6 @@ echo -ne "
                     Formatting the disk
 -------------------------------------------------------------------------
 "
-
 echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL
 
@@ -333,63 +169,6 @@ while true; do
         echo "Invalid disk. Try again."
     fi
 done
-
- # Dual boot support setup
-    #echo "Partitions on $DISK:"
-while true; do
-    read -p "Do you want to install arch along side a different OS (dualboot)? (y/n): " dualboot
-    if [[ $dualboot == "y" || $dualboot == "Y" ]]; then
-        dualboot="y"
-        break
-    elif [[ $dualboot == "n" || $dualboot == "N" ]]; then
-        dualboot="n"
-        break
-    else
-        echo "Enter a valid option"
-    fi
-done
-
-echo -ne "
--------------------------------------------------------------------------
-                          LUKS Setup
--------------------------------------------------------------------------
-"
-
-while true; do
-    read -p "Do you want to encrypt your system? (y/n): " ENCRYPT
-    if [[ $ENCRYPT == "y" || $ENCRYPT == "Y" ]]; then
-        disk_encrypt=y
-        break
-    elif [[ $ENCRYPT == "n" || $ENCRYPT == "N" ]]; then
-        disk_encrypt=n
-        break
-    else
-        echo "Enter a valid input"
-    fi
-done
-
-if [[ $disk_encrypt == "y" ]]; then
-
-    # Set a luks password
-    while true; do
-        read -s -p "Please enter LUKS password: " luks_password
-        echo ""
-
-        if (( ${#password} < 2 )); then
-            continue
-        fi
-        read -s -p "Confirm password: " password_confirm
-        if [[ "$luks_password" == "$password_confirm" ]]; then
-            echo ""
-            echo "LUKS password setup success"
-            break
-        else
-            echo ""
-            echo "LUKS passwords do not match. Try again."
-        fi
-    done
-fi
-
 clear
 echo -ne "
 -------------------------------------------------------------------------
@@ -402,22 +181,13 @@ Please review your installation configuration:
 
 Firmware Type:        $platform
 Target Disk:          $DISK
-Dualboot:             $(if [[ $dualboot == "y" ]]; then echo "YES"; else echo "NO"; fi)
-Disk Encryption:      $(if [[ $disk_encrypt == "y" ]]; then echo "ENABLED (LUKS)"; else echo "DISABLED"; fi)
 Hostname:             $name_of_machine
 Timezone:             $timezone
 Username:             $username
-Root Password:        $(printf '%*s' ${#root_password} '' | tr ' ' '*')
-User Password:        $(printf '%*s' ${#password} '' | tr ' ' '*')
-Installation Type:    $de_choice
-Swap size:            $(if [[ $hibernate == "YES" ]]; then echo "2X RAM size"; else echo "2-4G"; fi)
+Password:        $(printf '%*s' ${#password} '' | tr ' ' '*')
 
-"
-$(if [[ $de_choice == "SERVER" ]]; then
-echo "Server Filesystem:    $server_file"
-fi)
+
 # end confirmation nex the disk wipe
-
 echo "***********************************************************"
 echo " WARNING: You are about to completely WIPE ${DISK}!"
 echo " All data on this disk will be LOST forever."
@@ -461,30 +231,15 @@ cat > scripts/vars.sh << EOF
 
 # Disk & system information
 DISK=$DISK
-dualboot=$dualboot
 platform=$platform
-disk_encrypt=$disk_encrypt
 partition1=$partition1
-server_file=$server_file
-hibernate=$hibernate
 
 # User & hostname creation
 username=$username
-root_password=$root_password
 password=$password
-luks_password=$luks_password
 name_of_machine=$name_of_machine
 timezone=$timezone
 key_layout=$key_layout
-
-# DE choice
-de_choice=$de_choice
-
-# GPU GRAPHICS
-nvidia_install=$nvidia_install
-
 EOF
-
-
 
 # moet in 0 gaan
