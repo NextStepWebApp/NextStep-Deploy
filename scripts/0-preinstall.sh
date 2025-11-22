@@ -16,14 +16,6 @@ echo "Cleaning up and cancelling installation..."
             vgremove -f archvolume 2>/dev/null
             # Remove physical volume
             pvremove ${LVM_DEVICE} 2>/dev/null
-            # Close encrypted device if it exists
-            if [[ $disk_encrypt == "y" ]]; then
-                cryptsetup close cryptlvm 2>/dev/null
-            fi
-            # Wipe partition table
-            if [[ $dualboot == "n" ]]; then
-                sgdisk -Z ${DISK} 2>/dev/null
-            fi
 
             clear
             echo "========================================="
@@ -39,18 +31,10 @@ echo "Cleaning up and cancelling installation..."
 calculatelvm() {
     # Calculating sizes for lvm
     RAM_GB=$(free -m | awk '/^Mem:/ {printf "%.0f", $2/1024}')
+    DISK_SIZE_RAW=$(lsblk -d -n -o SIZE $DISK)
+    DISK_SIZE=$(echo $DISK_SIZE_RAW | sed 's/G//' | awk '{printf "%.0f", $1}')
 
-    if [[ $dualboot == "y" ]]; then
-        DISK_SIZE=${ROOT_PARTITION_SIZE}
-
-    else
-        DISK_SIZE_RAW=$(lsblk -d -n -o SIZE $DISK)
-        DISK_SIZE=$(echo $DISK_SIZE_RAW | sed 's/G//' | awk '{printf "%.0f", $1}')
-    fi
-
-    if [[ $hibernate == "YES" ]]; then
-        SWAP_SIZE=$((RAM_GB * 2))
-    elif [[ $DISK_SIZE < 40 ]]; then
+    if [[ $DISK_SIZE < 40 ]]; then
         SWAP_SIZE=2
     else
         SWAP_SIZE=4
@@ -61,68 +45,9 @@ calculatelvm() {
 }
 
 set_partition_names() {
-    # Set partition names again for UUID collection and for bios partition collection
-    #if [[ "${DISK}" =~ "nvme" || "${DISK}" =~ "mmcblk" ]]; then
-        #partition1=${DISK}p1
-        #partition2=${DISK}p2
-        #if [[ $platform == "BIOS" ]]; then
-        #    partition3=${DISK}p3
-        #fi
-
-    #else
-    #    partition1=${DISK}1
-    #    partition2=${DISK}2
-    #    if [[ $platform == "BIOS" ]]; then
-    #        partition3=${DISK}3
-    #    fi
-    #fi
-
     partition1=$(lsblk -lnpo NAME "${DISK}" | tail -n2 | head -n1 )
     partition2=$(lsblk -lnpo NAME "${DISK}" | tail -n1 )
 
-}
-
-setup_encryption() {
-    if [[ $disk_encrypt == "y" ]]; then
-        echo "Setting up LUKS encryption..."
-
-        #  which partition to encrypt based on platform
-        #if [[ $platform == "BIOS" ]]; then
-        #    ENCRYPT_PARTITION=${partition3}
-        #else
-            ENCRYPT_PARTITION=${partition2}
-            #fi
-
-
-        while true; do
-            if echo -n "${luks_password}" | cryptsetup -y -v luksFormat ${ENCRYPT_PARTITION} -; then
-                break
-            else
-                echo "Encryption setup failed. Retrying..."
-                read -p "Press Enter to retry or Ctrl+C to exit..."
-            fi
-        done
-
-        # Open the encrypted partition
-        while true; do
-            if echo -n "${luks_password}" | cryptsetup open ${ENCRYPT_PARTITION} cryptlvm -; then
-                break
-            else
-                echo "Failed to open encrypted partition. Retrying..."
-                read -p "Press Enter to retry or Ctrl+C to exit..."
-            fi
-        done
-
-        LVM_DEVICE="/dev/mapper/cryptlvm"
-    else
-        echo "Setting up without encryption..."
-        # Set LVM device based on platform
-        #if [[ $platform == "BIOS" ]]; then
-        #    LVM_DEVICE="${partition3}"
-        #else
-            LVM_DEVICE="${partition2}"
-            #fi
-    fi
 }
 
 setup_lvm() {
@@ -140,27 +65,13 @@ create_filesystems() {
                     Creating filesystems
 -------------------------------------------------------------------------
 "
-    # Check if the setup is server with Xfs else use default setup ext4
-    if [[ $de_choice == "SERVER" ]]; then
-        if [[ $server_file == "XFS" ]]; then
-            mkfs.xfs /dev/mapper/archvolume-root
-            mkfs.xfs /dev/mapper/archvolume-home
-            mkswap /dev/mapper/archvolume-swap
-        else
-            mkfs.ext4 /dev/mapper/archvolume-root
-            mkfs.ext4 /dev/mapper/archvolume-home
-            mkswap /dev/mapper/archvolume-swap
-            # Reduce home partition by 256M to leave some free space
-            lvreduce -L -256M --resizefs archvolume/home
-        fi
-    else
-        # Create filesystems
-        mkfs.ext4 /dev/mapper/archvolume-root
-        mkfs.ext4 /dev/mapper/archvolume-home
-        mkswap /dev/mapper/archvolume-swap
-        # Reduce home partition by 256M to leave some free space
-        lvreduce -L -256M --resizefs archvolume/home
-    fi
+    # Create filesystems
+    mkfs.ext4 /dev/mapper/archvolume-root
+    mkfs.ext4 /dev/mapper/archvolume-home
+    mkswap /dev/mapper/archvolume-swap
+     
+    # Reduce home partition by 256M to leave some free space
+    lvreduce -L -256M --resizefs archvolume/home
 }
 
 mount_common_filesystems() {
@@ -196,11 +107,6 @@ biossetup() {
     create_filesystems
     mount_common_filesystems
 
-    # Setup boot partition
-    #mkfs.ext4 ${partition1}
-    #mkdir /mnt/boot
-    #mount ${partition1} /mnt/boot
-
     # Setup BIOS partition
     mkfs.fat -F32 ${partition1}
     mkdir /mnt/boot
@@ -208,91 +114,26 @@ biossetup() {
 
 }
 
-
-if [[ $dualboot == "y" ]]; then
-    # Create new partitions only
-    # Creating boot partition
-    if [[ $platform == "EFI" ]]; then
-        if ! sgdisk -n 0::+3G --typecode=0:ef00 --change-name=0:'EFIBOOT' ${DISK}; then
-            echo "ERROR: Failed to create EFI partition. Possibly not enough free space."
-            echo "Cancelling installation"
-            installcleanup
-            exit 1
-        fi
-
-        # Create ROOT partition
-        if ! sgdisk -n 0::-0 --typecode=0:8300 --change-name=0:'ROOT' ${DISK}; then
-            echo "ERROR: Failed to create ROOT partition. Possibly no space left."
-            echo "Cancelling installation."
-            installcleanup
-            exit 1
-        fi
-    elif [[ $platform == "BIOS" ]]; then
-        if ! sgdisk -n 0::+2M --typecode=0:ef02 --change-name=1:'BIOSBOOT' ${DISK}; then
-            echo "ERROR: Failed to create ROOT partition. Possibly no space left."
-            echo "Cancelling installation."
-            installcleanup
-            exit 1
-        fi
-        if ! sgdisk -n 0::+1G --typecode=0:8300 --change-name=2:'BOOT' ${DISK}; then # partition1
-            echo "ERROR: Failed to create ROOT partition. Possibly no space left."
-            echo "Cancelling installation."
-            installcleanup
-            exit 1
-        fi
-        if !  sgdisk -n 0::-0 --typecode=0:8300 --change-name=3:'ROOT' ${DISK}; then
-            echo "ERROR: Failed to create ROOT partition. Possibly no space left."
-            echo "Cancelling installation."
-            installcleanup
-            exit 1
-        fi
-        sgdisk -A 1:set:2 ${DISK}
-
-    fi
-
+# Getting rid of everything
+umount -A --recursive /mnt 2>/dev/null
+sgdisk -Z ${DISK}
+sgdisk -a 2048 -o ${DISK}
+# Create partitions based on platform
+if [[ $platform == "EFI" ]]; then
+    sgdisk -n 1::+3G --typecode=1:ef00 --change-name=1:'EFIBOOT' ${DISK}
+    sgdisk -n 2::-0 --typecode=2:8300 --change-name=2:'ROOT' ${DISK}
     partprobe ${DISK}
-
-    # Finding the last partition (root partition)
-    ROOT_PARTITION=$(lsblk -lnpo NAME ${DISK} | tail -n1)
-    ROOT_PARTITION_SIZE_RAW=$(lsblk -d -n -o SIZE $ROOT_PARTITION)
-    ROOT_PARTITION_SIZE=$(echo $ROOT_PARTITION_SIZE_RAW | sed 's/G//' | awk '{printf "%.0f", $1}')
-    echo "${ROOT_PARTITION_SIZE_RAW}"
-    echo "${ROOT_PARTITION_SIZE}"
-
-    if [[ $ROOT_PARTITION_SIZE < 20 ]]; then
-        echo "ERROR: the root partition is to small"
-        installcleanup
-        exit 1
-    fi
-
-    if [[ $platform == "EFI" ]]; then
-        efisetup
-    elif [[ $platform == "BIOS" ]]; then
-        biossetup
-    fi
-
+    efisetup
+elif [[ $platform == "BIOS" ]]; then
+    sgdisk -n 1::+2M --typecode=1:ef02 --change-name=1:'BIOSBOOT' ${DISK}
+    sgdisk -n 2::+1G --typecode=2:8300 --change-name=2:'BOOT' ${DISK} # partition1
+    sgdisk -n 3::-0 --typecode=3:8300 --change-name=3:'ROOT' ${DISK}
+    sgdisk -A 1:set:2 ${DISK}
+    partprobe ${DISK}
+    biossetup
 else
-    # Getting rid of everything
-    umount -A --recursive /mnt 2>/dev/null
-    sgdisk -Z ${DISK}
-    sgdisk -a 2048 -o ${DISK}
-    # Create partitions based on platform
-    if [[ $platform == "EFI" ]]; then
-        sgdisk -n 1::+3G --typecode=1:ef00 --change-name=1:'EFIBOOT' ${DISK}
-        sgdisk -n 2::-0 --typecode=2:8300 --change-name=2:'ROOT' ${DISK}
-        partprobe ${DISK}
-        efisetup
-    elif [[ $platform == "BIOS" ]]; then
-        sgdisk -n 1::+2M --typecode=1:ef02 --change-name=1:'BIOSBOOT' ${DISK}
-        sgdisk -n 2::+1G --typecode=2:8300 --change-name=2:'BOOT' ${DISK} # partition1
-        sgdisk -n 3::-0 --typecode=3:8300 --change-name=3:'ROOT' ${DISK}
-        sgdisk -A 1:set:2 ${DISK}
-        partprobe ${DISK}
-        biossetup
-    else
-        echo "ERROR: Unknown platform, exiting..."
-        exit 1
-    fi
+    echo "ERROR: Unknown platform, exiting..."
+    exit 1
 fi
 
 # If something did not go right you need to be able to rerun the script
@@ -314,21 +155,6 @@ mkdir -p /mnt/usr/local/share/Archinstaller
 cp -r "$SCRIPT_DIR"/* /mnt/usr/local/share/Archinstaller/
 chmod +x /mnt/usr/local/share/Archinstaller/scripts/*
 
-
-
-# Store UUIDs based on setup
-if [[ $disk_encrypt == "y" ]]; then
-    #if [[ $platform == "BIOS" ]]; then
-    LUKS_UUID=$(blkid -s UUID -o value "$partition2")
-        #else
-        #LUKS_UUID=$(blkid -s UUID -o value "$partition2")
-        #fi
-    echo "LUKS_UUID=$LUKS_UUID" >> /mnt/usr/local/share/Archinstaller/scripts/vars.sh
-    echo "Stored LUKS UUID: $LUKS_UUID"
-fi
-
-echo "UUID saved to /mnt/usr/local/share/Archinstaller/scripts/vars.sh"
-
 echo -ne "
 -------------------------------------------------------------------------
                     Updating the system clock
@@ -342,7 +168,6 @@ echo -ne "
                     Selecting the mirrors
 -------------------------------------------------------------------------
 "
-
 echo "Updating mirrors with reflector..."
     if ! reflector --verbose --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist; then
         echo "Warning: Reflector failed, using existing mirrors"
@@ -355,15 +180,7 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
-if [[ $de_choice != SERVER ]]; then
-    packages="base base-devel bash linux linux-firmware linux-lts gdisk lvm2 networkmanager vim man-db man-pages texinfo flatpak"
-elif [[ $de_choice == SERVER ]]; then
-    if [[ $server_file == "XFS" ]]; then
-        packages="xfsprogs base bash linux-firmware linux-lts gdisk lvm2 networkmanager vim man-db man-pages texinfo"
-    else
-        packages="base bash linux-firmware linux-lts gdisk lvm2 networkmanager vim man-db man-pages texinfo"
-    fi
-fi
+packages="base bash linux-firmware linux-lts lvm2 networkmanager vim man-db man-pages texinfo"
 
 # Add EFI boot manager if needed
 if [[ $platform == "EFI" ]]; then
