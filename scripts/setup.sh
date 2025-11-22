@@ -27,7 +27,7 @@ while true; do
         if [[ $key_layout == $choice ]]; then
             found_key=y
             break
-            fi
+        fi
     done
     if [[ $found_key == y ]]; then
         echo ""
@@ -37,7 +37,6 @@ while true; do
         echo "ERROR - enter a valid input"
         read -p "Enter your key boards layout: " key_layout
     fi
-
 done
 
 # load the keyboard layout
@@ -51,50 +50,62 @@ while true; do
     read -s -p "Please enter user password: " password
     echo ""
     if (( ${#password} < 2 )); then
+        echo "Password must be at least 2 characters"
         continue
     fi
     read -s -p "Confirm password: " password_confirm
+    echo ""
     if [[ "$password" == "$password_confirm" ]]; then
-        echo ""
         echo "Password setup success"
         break
     else
-        echo ""
         echo "User passwords do not match. Try again."
     fi
 done
 
+# Set hostname
+
+name_of_machine="nextstepserver"
+
 echo -ne "
 -------------------------------------------------------------------------
-                        Chose your timezone
+                        Choose your timezone
 -------------------------------------------------------------------------
 "
 
-# I know, a url !!!! Oh no!!! 
-# Chill out this is a api to get yout timezone based of you ip
-timezone="$(curl --fail https://ipapi.co/timezone)"
+# Get timezone from IP
+timezone="$(curl --fail https://ipapi.co/timezone 2>/dev/null)"
 
-read -p "Is this your timezone? ${timezone} (y/n) " anwser
-while true; do
-    if [[ $anwser == "y" || $anwser == "Y" ]]; then
-        break
-    elif [[ $anwser == "n" || $anwser == "N" ]]; then
-        break
-    else
-        echo "Enter a valid input"
-    fi
-done
+if [[ -z "$timezone" ]]; then
+    echo "Could not detect timezone automatically"
+    timezone_detected=n
+else
+    echo "Detected timezone: $timezone"
+    read -p "Is this your timezone? (y/n): " answer
+    
+    while true; do
+        if [[ $answer == "y" || $answer == "Y" ]]; then
+            timezone_detected=y
+            break
+        elif [[ $answer == "n" || $answer == "N" ]]; then
+            timezone_detected=n
+            break
+        else
+            read -p "Enter a valid input (y/n): " answer
+        fi
+    done
+fi
 
-if [[ $anwser == "n" || $anwser == "N" ]]; then
-
-echo "Available regions:"
-ls /usr/share/zoneinfo/ | tr '\n' ' ' | sort
-echo ""
+if [[ $timezone_detected == "n" || -z "$timezone" ]]; then
+    echo ""
+    echo "Available regions:"
+    ls /usr/share/zoneinfo/ | grep -v -E '^(posix|right)$' | column
+    echo ""
 
     while true; do
         read -p "Enter your region (e.g., America, Europe, Asia): " region
-        echo ""
-        if [[ $region < 2 ]]; then
+        if [[ ${#region} -lt 2 ]]; then
+            echo "Region name too short"
             continue
         fi
         if [[ -d "/usr/share/zoneinfo/$region" ]]; then
@@ -102,11 +113,11 @@ echo ""
         else
             echo "Invalid region. Please try again."
         fi
-        done
+    done
 
     echo ""
     echo "Available cities/zones in $region:"
-    ls "/usr/share/zoneinfo/$region" | tr '\n' ' ' | sort
+    ls "/usr/share/zoneinfo/$region" | column
     echo ""
 
     while true; do
@@ -117,10 +128,9 @@ echo ""
         else
             echo "Invalid city/zone. Please try again."
         fi
-        done
-        echo "Timezone selected: $timezone"
+    done
+    echo "Timezone selected: $timezone"
 fi
-
 
 # Checking Firmware
 if [[ -f /sys/firmware/efi/fw_platform_size ]]; then
@@ -140,18 +150,20 @@ echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL
 
 while true; do
-    read -p "Enter disk name (e.g., sda): " DISK_NAME
+    read -p "Enter disk name (e.g., sda, nvme0n1): " DISK_NAME
     DISK="/dev/$DISK_NAME"
     if [[ -b "$DISK" ]]; then
+        echo "Selected disk: $DISK"
         break
     else
         echo "Invalid disk. Try again."
     fi
 done
+
 clear
 echo -ne "
 -------------------------------------------------------------------------
-                        INSTALLATION CONFORMATION
+                        INSTALLATION CONFIRMATION
 -------------------------------------------------------------------------
 "
 sleep 1
@@ -163,34 +175,36 @@ Target Disk:          $DISK
 Hostname:             $name_of_machine
 Timezone:             $timezone
 Username:             $username
-Password:        $(printf '%*s' ${#password} '' | tr ' ' '*')
+Password:             $(printf '%*s' ${#password} '' | tr ' ' '*')
 
+"
 
-# end confirmation nex the disk wipe
 echo "***********************************************************"
 echo " WARNING: You are about to completely WIPE ${DISK}!"
 echo " All data on this disk will be LOST forever."
 echo "***********************************************************"
+echo ""
+
 while true; do
-    read -p "Continue (y/n) " confirm
+    read -p "Continue with installation? (y/n): " confirm
     if [[ $confirm == "y" || $confirm == "Y" ]]; then
+        echo "Proceeding with installation..."
         break
     elif [[ $confirm == "n" || $confirm == "N" ]]; then
+        echo "Installation cancelled."
         exit 0
     else
-        echo "Enter a valid input"
+        echo "Enter a valid input (y/n)"
     fi
 done
 
 # Store variables for later use
-
 cat > scripts/vars.sh << EOF
 # Archinstaller configuration variables
 
 # Disk & system information
 DISK=$DISK
 platform=$platform
-partition1=$partition1
 
 # User & hostname creation
 username=$username
@@ -200,4 +214,4 @@ timezone=$timezone
 key_layout=$key_layout
 EOF
 
-# moet in 0 gaan
+echo "Configuration saved to scripts/vars.sh"
