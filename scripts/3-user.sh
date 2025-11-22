@@ -17,6 +17,8 @@ installpackage() {
     done
 }
 
+clear
+
 echo -ne "
 -------------------------------------------------------------------------
                         Desktop customizations
@@ -25,6 +27,7 @@ echo -ne "
 
 echo "hier moet de specifieke opzet gaan komen voor nextstep"
 
+clear
 
 echo -ne "
 -------------------------------------------------------------------------

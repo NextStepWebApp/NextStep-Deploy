@@ -15,6 +15,8 @@ installpackage() {
     done
 }
 
+clear
+
 echo -ne "
 -------------------------------------------------------------------------
                         pacman configuration
@@ -23,6 +25,7 @@ echo -ne "
 sed -i 's/^#Color/Color/' /etc/pacman.conf
 sed -i '/^Color$/a ILoveCandy' /etc/pacman.conf
 
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -40,6 +43,8 @@ elif grep -E "AuthenticAMD" <<< ${cpu_type}; then
     proc_ucode=amd-ucode.img
 fi
 
+clear
+
 echo -ne "
 -------------------------------------------------------------------------
                     Installing Graphics Drivers
@@ -54,6 +59,8 @@ elif lspci | grep 'VGA' | grep -E "Intel"; then
 else
     echo "No recognized GPU found"
 fi
+
+clear
 
 echo -ne "
 -------------------------------------------------------------------------

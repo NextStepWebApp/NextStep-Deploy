@@ -107,6 +107,7 @@ echo "$username password set"
 # Adding user to wheel group
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -116,6 +117,8 @@ echo -ne "
 ln -sf /usr/share/zoneinfo/${timezone} /etc/localtime
 hwclock --systohc
 echo "Timezone: ${timezone}"
+
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -137,6 +140,7 @@ echo "LANG=$language" > /etc/locale.conf
 pacman -S terminus-font --noconfirm --needed
 echo "KEYMAP=${key_layout}" > /etc/vconsole.conf && echo "FONT=ter-132b" >> /etc/vconsole.conf
 
+clear
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -149,6 +153,7 @@ echo "${name_of_machine}" >> /etc/hostname
 systemctl enable NetworkManager
 echo "Hostname: ${name_of_machine}"
 
+clear
 
 echo -ne "
 ------------------------------------------------------------------------------------------------
