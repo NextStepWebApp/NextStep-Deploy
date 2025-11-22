@@ -183,7 +183,7 @@ clear
 
 echo -ne "
 -------------------------------------------------------------------------
-                       Selecting the mirrors
+                          Selecting the mirrors
 -------------------------------------------------------------------------
 "
 echo "Updating mirrors with reflector..."
