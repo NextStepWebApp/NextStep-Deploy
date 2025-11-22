@@ -86,7 +86,6 @@ mount_common_filesystems() {
 efisetup() {
     calculatelvm
     set_partition_names
-    setup_encryption
     setup_lvm
     create_filesystems
     mount_common_filesystems
@@ -102,7 +101,6 @@ efisetup() {
 biossetup() {
     calculatelvm
     set_partition_names
-    setup_encryption
     setup_lvm
     create_filesystems
     mount_common_filesystems
