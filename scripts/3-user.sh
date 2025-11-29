@@ -58,7 +58,7 @@ sed -i 's/^;extension=sqlite3/extension=sqlite3/' /etc/php/php.ini
 
 # Clone the NextStep repo from github
 
-git clone https://github.com/NextStepWebApp/NextStep.git /srv/http
+git clone https://github.com/NextStepWebApp/NextStep.git /srv/http/NextStep
 
 
 

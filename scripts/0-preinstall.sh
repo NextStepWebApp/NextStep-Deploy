@@ -198,7 +198,7 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
-packages="base linux-firmware linux-lts lvm2 networkmanager openssh vim nano"
+packages="base sudo linux-firmware linux-lts lvm2 networkmanager openssh vim nano"
 
 # Add EFI boot manager if needed
 if [[ $platform == "EFI" ]]; then

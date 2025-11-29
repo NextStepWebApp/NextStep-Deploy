@@ -70,6 +70,6 @@ echo -ne "
 installpackage cockpit
 
 # Activate cockpit
-systemctl enable --now cockpit.service
+systemctl enable --now cockpit
 
 echo "Finished 2-setup.sh"
