@@ -28,9 +28,6 @@ echo -ne "
 installpackage php php-sqlite php-fpm apache python git
 systemctl enable --now httpd.service
 
-/srv/http
-sudo chown -R http:http .
-
 # Enable proxy modules
 sed -i 's/^#LoadModule proxy_module/LoadModule proxy_module/' /etc/httpd/conf/httpd.conf
 sed -i 's/^#LoadModule proxy_fcgi_module/LoadModule proxy_fcgi_module/' /etc/httpd/conf/httpd.conf
@@ -60,8 +57,8 @@ sed -i 's/^;extension=sqlite3/extension=sqlite3/' /etc/php/php.ini
 
 git clone https://github.com/NextStepWebApp/NextStep.git /srv/http/NextStep
 
-
-
+# Give permissions to apache
+sudo chown -R http:http /srv/http/NextStep
 
 clear
 
