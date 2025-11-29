@@ -64,9 +64,12 @@ clear
 
 echo -ne "
 -------------------------------------------------------------------------
-                    Installing Cockpit
+                         Installing Cockpit
 -------------------------------------------------------------------------
 "
 installpackage cockpit
+
+# Activate cockpit
+systemctl enable --now cockpit.service
 
 echo "Finished 2-setup.sh"

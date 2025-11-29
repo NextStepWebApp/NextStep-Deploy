@@ -117,7 +117,7 @@ clear
 
 echo -ne "
 -------------------------------------------------------------------------
-                        Localization
+                              Localization
 -------------------------------------------------------------------------
 "
 
@@ -128,10 +128,6 @@ locale-gen
 language=$(echo "$localization" | awk '{print $1}')
 
 echo "LANG=$language" > /etc/locale.conf
-
-# installing tty font package
-pacman -S terminus-font --noconfirm --needed
-echo "KEYMAP=${key_layout}" > /etc/vconsole.conf && echo "FONT=ter-132b" >> /etc/vconsole.conf
 
 clear
 
