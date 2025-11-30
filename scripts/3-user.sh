@@ -57,8 +57,25 @@ sed -i 's/^;extension=sqlite3/extension=sqlite3/' /etc/php/php.ini
 
 git clone https://github.com/NextStepWebApp/NextStep.git /srv/http/NextStep
 
+# Move the config files to the etc directory nextstepwebapp
+mkdir /etc/nextstepwebapp
+mv /srv/http/NextStep/config/* /etc/nextstepwebapp
+mv /srv/http/NextStep/data/errors.json /etc/nextstepwebapp
+rm -rf /srv/http/NextStep/config
+
+# Create the database dir
+# Move the database to var lib
+mkdir /var/lib/nextstepwebapp
+#mv /srv/http/NextStep/setup/nextstep_data.db /var/lib/nextstepwebapp
+#rm -rf /srv/http/NextStep/setup
+
+# Move the python file to /opt/nextstepwebapp
+mkdir /opt/nextstepwebapp
+mv /srv/http/NextStep/data/import.py /opt/nextstepwebapp
+rm -rf /srv/http/NextStep/data
+
 # Give permissions to apache
-sudo chown -R http:http /srv/http/NextStep
+#sudo chown -R http:http /srv/http/NextStep
 
 clear
 
