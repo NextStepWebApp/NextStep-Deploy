@@ -19,13 +19,26 @@ installpackage() {
 
 clear
 
+
+echo -ne "
+-------------------------------------------------------------------------
+                        pacman configuration
+-------------------------------------------------------------------------
+"
+sed -i 's/^#Color/Color/' /etc/pacman.conf
+sed -i '/^Color$/a ILoveCandy' /etc/pacman.conf
+
+clear
+
 echo -ne "
 -------------------------------------------------------------------------
                         NextStep Web App Setup
 -------------------------------------------------------------------------
 "
 
-installpackage php php-sqlite php-fpm apache python git
+# Activate cockpit
+#systemctl enable --now cockpit
+installpackage php php-sqlite php-fpm apache python git cockpit
 systemctl enable --now httpd.service
 
 # Enable proxy modules

@@ -21,10 +21,7 @@ installpackage() {
 biossetup() {
     # mkinitcpio
     sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-
-    # generate
-    mkinitcpio -P
-
+    
     # installing grub
     installpackage grub
 
@@ -72,16 +69,6 @@ EOF
 clear
 
 echo -ne "
--------------------------------------------------------------------------
-    _             _     _           _        _ _
-   / \   _ __ ___| |__ (_)_ __  ___| |_ __ _| | | ___ _ __
-  / _ \ | '__/ __| '_ \| | '_ \/ __| __/ _  | | |/ _ \ '__|
- / ___ \| | | (__| | | | | | | \__ \ || (_| | | |  __/ |
-/_/   \_\_|  \___|_| |_|_|_| |_|___/\__\__,_|_|_|\___|_|
--------------------------------------------------------------------------
-                    Automated Arch Linux Installer
--------------------------------------------------------------------------
-
 -------------------------------------------------------------------------
                   Creating user & Password setup
 -------------------------------------------------------------------------
@@ -160,5 +147,8 @@ else
     echo "ERROR: Unknown platform"
     exit 1
 fi
+
+# generate
+mkinitcpio -p linux-lts
 
 echo "Finished 1-preinstall.sh"

@@ -28,9 +28,8 @@ sleep 1
 
 
 ( arch-chroot /mnt /usr/local/share/Archinstaller/scripts/1-preinstall.sh )|& tee 1-preinstall.log
-( arch-chroot /mnt /usr/local/share/Archinstaller/scripts/2-setup.sh )|& tee 2-setup.log
-( arch-chroot /mnt /usr/local/share/Archinstaller/scripts/3-user.sh )|& tee 3-user.log
-( arch-chroot /mnt /usr/local/share/Archinstaller/scripts/4-cleanup.sh )|& tee 4-cleanup.log
+( arch-chroot /mnt /usr/local/share/Archinstaller/scripts/2-user.sh )|& tee 2-user.log
+( arch-chroot /mnt /usr/local/share/Archinstaller/scripts/3-cleanup.sh )|& tee 3-cleanup.log
 
 # Copy everything again after the installation
 # To get the complete log files on the host
