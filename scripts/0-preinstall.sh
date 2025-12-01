@@ -198,7 +198,22 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
-packages="base sudo linux-firmware linux-lts lvm2 networkmanager openssh vim nano"
+# Ucode
+cpu_type=$(lscpu)
+ucodepackage=""  
+if grep -E "GenuineIntel" <<< ${cpu_type}; then
+    echo "Installing Intel microcode"
+    ucodepackage="intel-ucode"
+    proc_ucode=intel-ucode.img
+elif grep -E "AuthenticAMD" <<< ${cpu_type}; then
+    echo "Installing AMD microcode"
+    ucodepackage="amd-ucode"
+    proc_ucode=amd-ucode.img
+else
+    echo "No recognized CPU vendor - skipping microcode"
+fi
+
+packages="base sudo linux-firmware linux-lts lvm2 networkmanager openssh vim $ucodepackage"
 
 # Add EFI boot manager if needed
 if [[ $platform == "EFI" ]]; then
