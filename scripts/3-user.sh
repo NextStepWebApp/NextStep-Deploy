@@ -54,28 +54,42 @@ systemctl restart httpd.service
 sed -i 's/^;extension=sqlite3/extension=sqlite3/' /etc/php/php.ini
 
 # Clone the NextStep repo from github
-
 git clone https://github.com/NextStepWebApp/NextStep.git /srv/http/NextStep
 
-# Move the config files to the etc directory nextstepwebapp
+# Create etc dir for webapp and move it to there
 mkdir /etc/nextstepwebapp
-mv /srv/http/NextStep/config/* /etc/nextstepwebapp
-mv /srv/http/NextStep/data/errors.json /etc/nextstepwebapp
-rm -rf /srv/http/NextStep/config
+#This file is only read by the webapp
+mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp
 
-# Create the database dir
-# Move the database to var lib
+# The rest of the configs go to /var/lib
 mkdir /var/lib/nextstepwebapp
-#mv /srv/http/NextStep/setup/nextstep_data.db /var/lib/nextstepwebapp
-#rm -rf /srv/http/NextStep/setup
+mv /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp
+mv /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp
+mv /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp
+mv /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp
+rm -rf /srv/http/NextStep/config # remove the config dir
 
 # Move the python file to /opt/nextstepwebapp
 mkdir /opt/nextstepwebapp
 mv /srv/http/NextStep/data/import.py /opt/nextstepwebapp
 rm -rf /srv/http/NextStep/data
 
-# Give permissions to apache
-#sudo chown -R http:http /srv/http/NextStep
+# Permissions application code
+chown -R root:root /srv/http/NextStep
+chmod -R 755 /srv/http/NextStep
+
+# /var/lib
+chown -R http:http /var/lib/nextstepwebapp
+chmod -R 775 /var/lib/nextstepwebapp
+
+# /etc
+chown -R root:root /etc/nextstepwebapp
+chmod -R 644 /etc/nextstepwebapp/*.json
+chmod 755 /etc/nextstepwebapp
+
+# /opt
+chown -R root:root /opt/nextstepwebapp
+chmod -R 755 /opt/nextstepwebapp
 
 clear
 
