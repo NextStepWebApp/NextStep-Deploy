@@ -107,19 +107,20 @@ else
     chown -R root:root /srv/http/NextStep
     chmod -R 755 /srv/http/NextStep
 
-    # /var/lib
-    chown -R http:http /var/lib/nextstepwebapp
-    chmod -R 775 /var/lib/nextstepwebapp
-
-    # /etc
-    chown -R root:root /etc/nextstepwebapp
-    chmod -R 644 /etc/nextstepwebapp/*.json
-    chmod 755 /etc/nextstepwebapp
-
-    # /opt
-    chown -R root:root /opt/nextstepwebapp
-    chmod -R 755 /opt/nextstepwebapp
 fi
+# /var/lib
+chown -R http:http /var/lib/nextstepwebapp
+chmod -R 775 /var/lib/nextstepwebapp
+
+# /etc
+chown -R root:root /etc/nextstepwebapp
+chmod -R 644 /etc/nextstepwebapp/*.json
+chmod 755 /etc/nextstepwebapp
+
+# /opt
+chown -R root:root /opt/nextstepwebapp
+chmod -R 755 /opt/nextstepwebapp
+
 clear
 
 echo -ne "
@@ -128,5 +129,11 @@ echo -ne "
 -------------------------------------------------------------------------
 
 "
-echo "Nog aan werken"
-echo "Firewall opzet doen"
+
+# Firewall and openssh setup
+systemctl enable --now sshd.service
+systemctl enable --now ufw
+ufw enable
+ufw allow 9090 # cockpit
+ufw allow 80 # normal web port 
+ufw allow 22 # ssh
