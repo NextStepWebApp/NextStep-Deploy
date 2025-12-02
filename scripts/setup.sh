@@ -150,6 +150,22 @@ else
     platform=BIOS
 fi
 
+if [[ $platform == "EFI" ]]; then 
+   
+    while true; do
+        read -p "Do you want to encrypt your system? (y/n): " ENCRYPT
+        if [[ $ENCRYPT == "y" || $ENCRYPT == "Y" ]]; then
+            disk_encrypt=y
+            break
+        elif [[ $ENCRYPT == "n" || $ENCRYPT == "N" ]]; then
+            disk_encrypt=n
+            break
+        else
+            echo "Enter a valid input"
+        fi
+    done 
+fi
+
 clear
 echo -ne "
 -------------------------------------------------------------------------
@@ -185,8 +201,11 @@ Hostname:             $name_of_machine
 Timezone:             $timezone
 Username:             $username
 Password:             $(printf '%*s' ${#password} '' | tr ' ' '*')
-
 "
+if [[ $platform == "EFI" && $disk_encrypt == "y" ]]; then
+  echo "Luks password: $(printf '%*s' ${#password} '' | tr ' ' '*')"
+fi
+
 
 echo "***********************************************************"
 echo " WARNING: You are about to completely WIPE ${DISK}!"
@@ -214,6 +233,7 @@ cat > scripts/vars.sh << EOF
 # Disk & system information
 DISK=$DISK
 platform=$platform
+disk_encrypt=$disk_encrypt
 
 # User & hostname creation
 username=$username
