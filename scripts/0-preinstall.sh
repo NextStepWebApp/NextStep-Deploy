@@ -76,7 +76,7 @@ setup_encryption() {
         ENCRYPT_PARTITION=${partition2}
         
          while true; do
-             if echo -n "${luks_password}" | cryptsetup -y -v luksFormat ${ENCRYPT_PARTITION} -; then
+             if echo -n "${password}" | cryptsetup -y -v luksFormat ${ENCRYPT_PARTITION} -; then
                 break
             else
                 echo "Encryption setup failed. Retrying..."
@@ -86,7 +86,7 @@ setup_encryption() {
         
         # Open the encrypted partition
         while true; do
-            if echo -n "${luks_password}" | cryptsetup open ${ENCRYPT_PARTITION} cryptlvm -; then
+            if echo -n "${password}" | cryptsetup open ${ENCRYPT_PARTITION} cryptlvm -; then
                  break
             else
                 echo "Failed to open encrypted partition. Retrying..."
