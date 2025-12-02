@@ -59,6 +59,9 @@ if ! grep -q "Include conf/extra/php-fpm.conf" /etc/httpd/conf/httpd.conf; then
     echo "Include conf/extra/php-fpm.conf" >> /etc/httpd/conf/httpd.conf
 fi
 
+# change made for apache
+grep -q "^ServerName" /etc/httpd/conf/httpd.conf || echo "ServerName localhost" | sudo tee -a /etc/httpd/conf/httpd.conf
+
 # Start services
 systemctl enable --now php-fpm.service
 systemctl restart httpd.service
