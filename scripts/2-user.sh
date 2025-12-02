@@ -83,21 +83,11 @@ if [[ $developer_deploy == "Yes" ]]; then
     # Move files OUT of git, symlink INTO git
     mkdir -p /var/lib/nextstepwebapp /etc/nextstepwebapp /opt/nextstepwebapp
     
-    mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
-    mv /srv/http/NextStep/config/*.json /var/lib/nextstepwebapp/
-    mv /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
-    
-    # Create symlinks pointing INTO the git repo for app access
-    ln -sf /etc/nextstepwebapp/nextstep_config.json /srv/http/NextStep/config/nextstep_config.json
-    ln -sf /var/lib/nextstepwebapp/branding.json /srv/http/NextStep/config/branding.json
-    ln -sf /var/lib/nextstepwebapp/config.json /srv/http/NextStep/config/config.json
-    ln -sf /var/lib/nextstepwebapp/errors.json /srv/http/NextStep/config/errors.json
-    ln -sf /var/lib/nextstepwebapp/setup.json /srv/http/NextStep/config/setup.json
-    ln -sf /opt/nextstepwebapp/import.py /srv/http/NextStep/data/import.py
-    
-    # Git will ignore the symlinks if they're in .gitignore
-    chown -R $USER:$USER /srv/http/NextStep
-fi
+    cp /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
+    cp /srv/http/NextStep/config/*.json /var/lib/nextstepwebapp/
+    cp /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
+   
+    chown -R admin:admin /srv/http/NextStep
 else
     mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp #This file is only read by the webapp
     # The rest of the configs go to /var/lib
@@ -140,7 +130,4 @@ echo -ne "
 # Firewall and openssh setup
 systemctl enable sshd.service
 systemctl enable ufw
-ufw enable
-ufw allow 9090 # cockpit
-ufw allow 80 # normal web port 
-ufw allow 22 # ssh
+# The rest of the Networking setup will be done post-setup
