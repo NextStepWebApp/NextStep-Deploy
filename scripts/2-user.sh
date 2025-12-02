@@ -105,7 +105,7 @@ else
 
     # Permissions application code
     chown -R root:root /srv/http/NextStep
-    chmod -R 755 /srv/http/NextStep
+    chmod -R 777 /srv/http/NextStep
 
 fi
 # /var/lib
