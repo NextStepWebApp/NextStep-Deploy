@@ -17,7 +17,11 @@ installcleanup() {
     vgremove -f archvolume 2>/dev/null
     # Remove physical volume
     pvremove ${LVM_DEVICE} 2>/dev/null
-
+    
+    # Close encryption if present
+    if [[ $disk_encrypt == "y" ]]; then
+        cryptsetup close cryptlvm 2>/dev/null
+    fi
     clear
     echo "========================================="
     echo "     Installation Cancelled"
@@ -66,6 +70,36 @@ set_partition_names() {
     fi
 }
 
+setup_encryption() {
+    if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then
+        echo "Setting up LUKS encryption..."
+        ENCRYPT_PARTITION=${partition2}
+        
+         while true; do
+             if echo -n "${luks_password}" | cryptsetup -y -v luksFormat ${ENCRYPT_PARTITION} -; then
+                break
+            else
+                echo "Encryption setup failed. Retrying..."
+                read -p "Press Enter to retry or Ctrl+C to exit..."
+            fi
+        done
+        
+        # Open the encrypted partition
+        while true; do
+            if echo -n "${luks_password}" | cryptsetup open ${ENCRYPT_PARTITION} cryptlvm -; then
+                 break
+            else
+                echo "Failed to open encrypted partition. Retrying..."
+                read -p "Press Enter to retry or Ctrl+C to exit..."
+            fi
+        done
+        LVM_DEVICE="/dev/mapper/cryptlvm"
+    
+    else 
+        echo "Setting up without encryption..."
+    fi
+}
+
 setup_lvm() {
     # Create LVM setup
     pvcreate $LVM_DEVICE
@@ -103,6 +137,7 @@ mount_common_filesystems() {
 efisetup() {
     calculatelvm
     set_partition_names
+    setup_encryption
     setup_lvm
     create_filesystems
     mount_common_filesystems
@@ -171,6 +206,13 @@ chmod +x /mnt/usr/local/share/Archinstaller/scripts/*
 
 clear
 
+# Storing the uuid if UEFI with LUKS
+# Store UUIDs based on setup
+if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then
+    LUKS_UUID=$(blkid -s UUID -o value "$partition2")
+    echo "LUKS_UUID=$LUKS_UUID" >> /mnt/usr/local/share/Archinstaller/scripts/vars.sh
+fi
+
 echo -ne "
 -------------------------------------------------------------------------
                     Updating the system clock
@@ -213,7 +255,13 @@ else
     echo "No recognized CPU vendor - skipping microcode"
 fi
 
-packages="base sudo linux-firmware linux-lts lvm2 networkmanager openssh vim $ucodepackage"
+# See if cryptsetuppackage is needed
+encryption_package= ""
+if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then
+    encryption_package= "cryptsetup"
+fi
+
+packages="base sudo linux-firmware linux-lts lvm2 networkmanager openssh vim $ucodepackage $encryption_package"
 
 # Add EFI boot manager if needed
 if [[ $platform == "EFI" ]]; then

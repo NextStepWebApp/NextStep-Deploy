@@ -36,7 +36,11 @@ biossetup() {
 # EFI setup function
 efisetup() {
     # mkinitcpio setup
-    sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
+    if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then
+        sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf   
+    else 
+        sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
+    fi
 
     # .preset files
     # mkinitcpio preset file for the 'linux-lts' package
@@ -63,7 +67,12 @@ editor no
 EOF
 
     systemctl enable systemd-boot-update.service
-    echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
+    
+    if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then 
+        echo "rd.luks.name=${LUKS_UUID}=cryptlvm root=/dev/archvolume/root rw" > /etc/kernel/cmdline
+    else 
+        echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
+    fi
 }
 
 clear
