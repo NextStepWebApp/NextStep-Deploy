@@ -80,18 +80,24 @@ mkdir /opt/nextstepwebapp
 mkdir /etc/nextstepwebapp
 
 if [[ $developer_deploy == "Yes" ]]; then 
-    # Create symlinks instead of moving files
-    ln -sf /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/nextstep_config.json
-    ln -sf /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/branding.json
-    ln -sf /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/config.json
-    ln -sf /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/errors.json
-    ln -sf /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/setup.json
-    ln -sf /srv/http/NextStep/data/import.py /opt/nextstepwebapp/import.py
-   
-    # Give Permissions to apache
-    chown -R http:http /srv/http/NextStep
-    chmod -R 755 /srv/http/NextStep
-
+    # Move files OUT of git, symlink INTO git
+    mkdir -p /var/lib/nextstepwebapp /etc/nextstepwebapp /opt/nextstepwebapp
+    
+    mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
+    mv /srv/http/NextStep/config/*.json /var/lib/nextstepwebapp/
+    mv /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
+    
+    # Create symlinks pointing INTO the git repo for app access
+    ln -sf /etc/nextstepwebapp/nextstep_config.json /srv/http/NextStep/config/nextstep_config.json
+    ln -sf /var/lib/nextstepwebapp/branding.json /srv/http/NextStep/config/branding.json
+    ln -sf /var/lib/nextstepwebapp/config.json /srv/http/NextStep/config/config.json
+    ln -sf /var/lib/nextstepwebapp/errors.json /srv/http/NextStep/config/errors.json
+    ln -sf /var/lib/nextstepwebapp/setup.json /srv/http/NextStep/config/setup.json
+    ln -sf /opt/nextstepwebapp/import.py /srv/http/NextStep/data/import.py
+    
+    # Git will ignore the symlinks if they're in .gitignore
+    chown -R $USER:$USER /srv/http/NextStep
+fi
 else
     mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp #This file is only read by the webapp
     # The rest of the configs go to /var/lib
