@@ -38,9 +38,9 @@ echo -ne "
 "
 
 # Activate cockpit
-#systemctl enable --now cockpit
+#systemctl enable cockpit
 installpackage php php-sqlite php-fpm apache python git cockpit ufw
-systemctl enable --now httpd.service
+systemctl enable httpd.service
 
 
 # Enable proxy modules
@@ -65,7 +65,7 @@ fi
 grep -q "^ServerName" /etc/httpd/conf/httpd.conf || echo "ServerName localhost" | sudo tee -a /etc/httpd/conf/httpd.conf
 
 # Start services
-systemctl enable --now php-fpm.service
+systemctl enable php-fpm.service
 systemctl restart httpd.service
 
 # Enable Sqlite extention
@@ -131,8 +131,8 @@ echo -ne "
 "
 
 # Firewall and openssh setup
-systemctl enable --now sshd.service
-systemctl enable --now ufw
+systemctl enable sshd.service
+systemctl enable ufw
 ufw enable
 ufw allow 9090 # cockpit
 ufw allow 80 # normal web port 
