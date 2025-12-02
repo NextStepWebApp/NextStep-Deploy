@@ -14,3 +14,7 @@ localization="en_US.UTF-8 UTF-8"
 #localization="zh_CN.UTF-8 UTF-8"  # Chinese Simplified
 #localization="zh_TW.UTF-8 UTF-8"  # Chinese Traditional
 #localization="ja_JP.UTF-8 UTF-8"  # Japanese
+
+developer_deploy="No"
+#developer_deploy="Yes"
+

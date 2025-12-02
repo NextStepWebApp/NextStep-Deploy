@@ -2,6 +2,7 @@
 
 # funtion with all the variables that are handed over from 0-preinstall.sh
 source /usr/local/share/Archinstaller/scripts/vars.sh
+source /usr/local/share/Archinstaller/scripts/config.sh
 
 
 installpackage() {
@@ -38,8 +39,9 @@ echo -ne "
 
 # Activate cockpit
 #systemctl enable --now cockpit
-installpackage php php-sqlite php-fpm apache python git cockpit
+installpackage php php-sqlite php-fpm apache python git cockpit ufw
 systemctl enable --now httpd.service
+
 
 # Enable proxy modules
 sed -i 's/^#LoadModule proxy_module/LoadModule proxy_module/' /etc/httpd/conf/httpd.conf
@@ -72,41 +74,52 @@ sed -i 's/^;extension=sqlite3/extension=sqlite3/' /etc/php/php.ini
 # Clone the NextStep repo from github
 git clone https://github.com/NextStepWebApp/NextStep.git /srv/http/NextStep
 
-# Create etc dir for webapp and move it to there
-mkdir /etc/nextstepwebapp
-#This file is only read by the webapp
-mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp
-
-# The rest of the configs go to /var/lib
+# Make the directorys where the files will go
 mkdir /var/lib/nextstepwebapp
-mv /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp
-mv /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp
-mv /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp
-mv /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp
-rm -rf /srv/http/NextStep/config # remove the config dir
-
-# Move the python file to /opt/nextstepwebapp
 mkdir /opt/nextstepwebapp
-mv /srv/http/NextStep/data/import.py /opt/nextstepwebapp
-rm -rf /srv/http/NextStep/data
+mkdir /etc/nextstepwebapp
 
-# Permissions application code
-chown -R root:root /srv/http/NextStep
-chmod -R 755 /srv/http/NextStep
+if [[ $developer_deploy == "Yes" ]]; then 
+    # Create symlinks instead of moving files
+    ln -sf /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/nextstep_config.json
+    ln -sf /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/branding.json
+    ln -sf /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/config.json
+    ln -sf /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/errors.json
+    ln -sf /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/setup.json
+    ln -sf /srv/http/NextStep/data/import.py /opt/nextstepwebapp/import.py
+   
+    # Give Permissions to apache
+    chown -R http:http /srv/http/NextStep
 
-# /var/lib
-chown -R http:http /var/lib/nextstepwebapp
-chmod -R 775 /var/lib/nextstepwebapp
+else
+    mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp #This file is only read by the webapp
+    # The rest of the configs go to /var/lib
+    mv /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp
+    mv /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp
+    mv /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp
+    mv /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp
+    rm -rf /srv/http/NextStep/config # remove the config dir
+    # Move the python file to /opt/nextstepwebapp
+    mv /srv/http/NextStep/data/import.py /opt/nextstepwebapp
+    rm -rf /srv/http/NextStep/data
 
-# /etc
-chown -R root:root /etc/nextstepwebapp
-chmod -R 644 /etc/nextstepwebapp/*.json
-chmod 755 /etc/nextstepwebapp
+    # Permissions application code
+    chown -R root:root /srv/http/NextStep
+    chmod -R 755 /srv/http/NextStep
 
-# /opt
-chown -R root:root /opt/nextstepwebapp
-chmod -R 755 /opt/nextstepwebapp
+    # /var/lib
+    chown -R http:http /var/lib/nextstepwebapp
+    chmod -R 775 /var/lib/nextstepwebapp
 
+    # /etc
+    chown -R root:root /etc/nextstepwebapp
+    chmod -R 644 /etc/nextstepwebapp/*.json
+    chmod 755 /etc/nextstepwebapp
+
+    # /opt
+    chown -R root:root /opt/nextstepwebapp
+    chmod -R 755 /opt/nextstepwebapp
+fi
 clear
 
 echo -ne "
