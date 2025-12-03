@@ -72,6 +72,6 @@ fi
 
 # Alias to jump to code dir
 if ! grep -q "nextstep-code" /home/admin/.bashrc; then
-    echo "alias nextstep-code='/srv/http/NextStep'" >> /home/admin/.bashrc
+    echo "alias nextstep-code='cd /srv/http/NextStep/ && ls'" >> /home/admin/.bashrc
     echo "Alias added to .bashrc"
 fi
