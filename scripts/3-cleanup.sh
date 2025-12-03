@@ -46,3 +46,25 @@ fi
 EOF
 
 chmod +x /etc/profile.d/nextstep-setup.sh
+
+# Server ip script
+cat > /opt/nextstepwebapp/server-ip.sh << 'EOF'
+#!/bin/bash
+# NextStep Server ip - Shows the ip address of the server and available ports
+
+ip_add=$(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d'/' -f1)
+echo "Your server ip address is: $ip_add"
+echo " "
+echo "Cockpit address:      http://${ip_add}:9090"
+echo "NextStep address:     http://${ip_add}/NextStep"
+echo "SSH address:          ssh admin@${ip_add}"
+EOF
+
+chmod +x /opt/nextstepwebapp/server-ip.sh
+echo "Server ip script created at /opt/nextstepwebapp/server-ip.sh"
+
+# Add alias to user's .bashrc
+if ! grep -q "nextstep-ip" /home/admin/.bashrc; then
+    echo "alias nextstep-ip='/opt/nextstepwebapp/server-ip.sh'" >> /home/admin/.bashrc
+    echo "Alias added to .bashrc"
+fi
