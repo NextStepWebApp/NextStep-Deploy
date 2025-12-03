@@ -9,7 +9,8 @@ cat > /opt/nextstepwebapp/sync-configs.sh << 'EOF'
 
 echo "Syncing configs from git to system..."
 sudo cp /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/
-sudo cp /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/
+#sudo cp /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/
+# The setup will reset it
 sudo cp /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/
 sudo cp /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/
 sudo cp /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
