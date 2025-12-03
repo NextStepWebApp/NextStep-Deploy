@@ -3,6 +3,12 @@
 source /usr/local/share/Archinstaller/scripts/config.sh
 # Sync script
 
+
+
+#!!!!!!!!!!!!! Like the syc alias does not go to the bash rc need testing
+
+
+
 if [[ $developer_deploy == "Yes" ]]; then 
 cat > /opt/nextstepwebapp/sync-configs.sh << 'EOF'
 #!/bin/bash
@@ -20,7 +26,7 @@ echo "Sync script created at /opt/nextstepwebapp/sync-configs.sh"
 
 # Add alias to user's .bashrc
 if ! grep -q "nextstep-sync" /home/admin/.bashrc; then
-    echo "alias nextstep-sync='/opt/nextstepwebapp/sync-configs.sh'" >> ~/.bashrc
+    echo "alias nextstep-sync='/opt/nextstepwebapp/sync-configs.sh'" >> /home/admin/.bashrc
     echo "Alias added to .bashrc"
 fi
 fi
