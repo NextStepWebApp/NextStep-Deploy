@@ -39,7 +39,7 @@ if [ ! -f "$SETUP_FLAG" ]; then
     sudo ufw allow 80 # normal web port 
     sudo ufw allow 22 # ssh
     sudo touch "$SETUP_FLAG"
-    echo "✓ Setup complete! Cockpit and firewall enabled."
+    echo "Setup complete! Cockpit and firewall enabled."
 fi
 EOF
 
