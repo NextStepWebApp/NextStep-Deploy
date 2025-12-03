@@ -60,8 +60,8 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
-ip_add=$(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d'/' -f1)
-echo "Your server ip address is: $ip_add"
+#ip_add=$(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d'/' -f1)
+#echo "Your server ip address is: $ip_add"
 echo ""
 echo ""
 echo "Please reboot your Installation"
