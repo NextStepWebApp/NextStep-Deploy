@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source /usr/local/share/Archinstaller/scripts/config.sh
 # Sync script
 
 if [[ $developer_deploy == "Yes" ]]; then 
