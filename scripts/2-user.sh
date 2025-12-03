@@ -80,11 +80,14 @@ mkdir /opt/nextstepwebapp
 mkdir /etc/nextstepwebapp
 
 if [[ $developer_deploy == "Yes" ]]; then 
-    # Move files OUT of git, symlink INTO git
+    # cp files to the places where they need to be. Use the nextstep-sync command to sync the files 
     mkdir -p /var/lib/nextstepwebapp /etc/nextstepwebapp /opt/nextstepwebapp
     
+    cp /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/
+    cp /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/
+    cp /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/
+    cp /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/
     cp /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
-    cp /srv/http/NextStep/config/*.json /var/lib/nextstepwebapp/
     cp /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
    
     chown -R admin:admin /srv/http/NextStep
@@ -111,8 +114,7 @@ chmod -R 775 /var/lib/nextstepwebapp
 
 # /etc
 chown -R root:root /etc/nextstepwebapp
-chmod -R 644 /etc/nextstepwebapp/*.json
-chmod 755 /etc/nextstepwebapp
+chmod -R 755 /etc/nextstepwebapp/
 
 # /opt
 chown -R root:root /opt/nextstepwebapp
@@ -126,7 +128,6 @@ echo -ne "
 -------------------------------------------------------------------------
 
 "
-
 # Firewall and openssh setup
 systemctl enable sshd.service
 systemctl enable ufw

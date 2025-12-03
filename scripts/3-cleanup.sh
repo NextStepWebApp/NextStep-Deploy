@@ -1,21 +1,17 @@
 #!/bin/bash
-
 source /usr/local/share/Archinstaller/scripts/config.sh
+
 # Sync script
-
-
-
-#!!!!!!!!!!!!! Like the syc alias does not go to the bash rc need testing
-
-
-
 if [[ $developer_deploy == "Yes" ]]; then 
 cat > /opt/nextstepwebapp/sync-configs.sh << 'EOF'
 #!/bin/bash
 # NextStep Config Sync - Updates system configs from git repo
 
 echo "Syncing configs from git to system..."
-sudo cp /srv/http/NextStep/config/*.json /var/lib/nextstepwebapp/
+sudo cp /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/
+sudo cp /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/
+sudo cp /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/
+sudo cp /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/
 sudo cp /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
 sudo cp /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
 echo "Done! Configs synced."
