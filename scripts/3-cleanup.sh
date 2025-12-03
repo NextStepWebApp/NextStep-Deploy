@@ -69,3 +69,9 @@ if ! grep -q "nextstep-ip" /home/admin/.bashrc; then
     echo "alias nextstep-ip='/opt/nextstepwebapp/server-ip.sh'" >> /home/admin/.bashrc
     echo "Alias added to .bashrc"
 fi
+
+# Alias to jump to code dir
+if ! grep -q "nextstep-code" /home/admin/.bashrc; then
+    echo "alias nextstep-code='/srv/http/NextStep'" >> /home/admin/.bashrc
+    echo "Alias added to .bashrc"
+fi
