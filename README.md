@@ -2,6 +2,10 @@
 
 A bash script for automated Arch Linux installation, primarily designed for virtual machine deployments.
 
+Install command :
+
+bash <(curl -sL https://github.com/NextStepWebApp/NextStep-Deploy/raw/refs/heads/main/setup.sh)
+
 ## ⚠️ Warning
 
 This script is **not thoroughly tested** in all configurations. Use at your own risk, especially on physical hardware. Always ensure you have backups of important data before proceeding.
