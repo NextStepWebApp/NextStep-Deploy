@@ -79,23 +79,25 @@ mkdir /var/lib/nextstepwebapp
 mkdir /opt/nextstepwebapp
 mkdir /etc/nextstepwebapp
 
-if [[ $developer_deploy == "Yes" ]]; then 
-    # cp files to the places where they need to be. Use the nextstep-sync command to sync the files 
+if [[ $developer_deploy == "Yes" ]]; then
+    # cp files to the places where they need to be. Use the nextstep-sync command to sync the files
     mkdir -p /var/lib/nextstepwebapp /etc/nextstepwebapp /opt/nextstepwebapp
-    
+
     cp /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/
     cp /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp/
     cp /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/
     cp /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/
+    cp /srv/http/NextStep/config/theme.json /var/lib/nextstepwebapp/
     cp /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
     cp /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
-   
+
     chown -R admin:admin /srv/http/NextStep
 else
     mv /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp #This file is only read by the webapp
     # The rest of the configs go to /var/lib
     mv /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp
     mv /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp
+    mv /srv/http/NextStep/config/theme.json /var/lib/nextstepwebapp/
     mv /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp
     mv /srv/http/NextStep/config/setup.json /var/lib/nextstepwebapp
     rm -rf /srv/http/NextStep/config # remove the config dir
