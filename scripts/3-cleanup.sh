@@ -2,7 +2,7 @@
 source /usr/local/share/Archinstaller/scripts/config.sh
 
 # Sync script
-if [[ $developer_deploy == "Yes" ]]; then 
+if [[ $developer_deploy == "Yes" ]]; then
 cat > /opt/nextstepwebapp/sync-configs.sh << 'EOF'
 #!/bin/bash
 # NextStep Config Sync - Updates system configs from git repo
@@ -13,6 +13,7 @@ sudo cp /srv/http/NextStep/config/branding.json /var/lib/nextstepwebapp/
 # The setup will reset it
 sudo cp /srv/http/NextStep/config/errors.json /var/lib/nextstepwebapp/
 sudo cp /srv/http/NextStep/config/config.json /var/lib/nextstepwebapp/
+sudo cp /srv/http/NextStep/config/theme.json /var/lib/nextstepwebapp/
 sudo cp /srv/http/NextStep/config/nextstep_config.json /etc/nextstepwebapp/
 sudo cp /srv/http/NextStep/data/import.py /opt/nextstepwebapp/
 echo "Done! Configs synced."
@@ -39,7 +40,7 @@ if [ ! -f "$SETUP_FLAG" ]; then
     sudo systemctl enable --now ufw
     sudo ufw enable
     sudo ufw allow 9090 # cockpit
-    sudo ufw allow 80 # normal web port 
+    sudo ufw allow 80 # normal web port
     sudo ufw allow 22 # ssh
     sudo touch "$SETUP_FLAG"
     echo "Setup complete! Cockpit and firewall enabled."
