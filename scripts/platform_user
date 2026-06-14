@@ -1,34 +1,10 @@
 #!/bin/bash
 
 # Function with all the variables that are handed over from 0-preinstall.sh
-source /usr/local/share/Archinstaller/scripts/vars.sh
-source /usr/local/share/Archinstaller/scripts/config.sh
-
-installpackage() {
-    local pkgs="$@"
-    while true; do
-        if ! pacman -S --noconfirm --needed $pkgs; then
-            echo "ERROR: Failed to install: $pkgs"
-            echo "Retrying..."
-        else
-            echo "SUCCESS: Installed $pkgs"
-            break
-        fi
-    done
-}
+source /opt/NextStep-Deploy/scripts/vars.sh
 
 # BIOS setup function
 biossetup() {
-    # mkinitcpio
-    sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-    
-    # installing grub
-    installpackage grub
-
-    # Disable submenu's good for multiple kernels
-    sed -i 's/^#GRUB_DISABLE_SUBMENU=/GRUB_DISABLE_SUBMENU=/' /etc/default/grub
-    sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub
-
     grub-install --target=i386-pc ${DISK}
     grub-mkconfig -o /boot/grub/grub.cfg
 }
@@ -37,8 +13,8 @@ biossetup() {
 efisetup() {
     # mkinitcpio setup
     if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then
-        sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf   
-    else 
+        sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
+    else
         sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
     fi
 
@@ -67,10 +43,10 @@ editor no
 EOF
 
     systemctl enable systemd-boot-update.service
-    
-    if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then 
+
+    if [[ $disk_encrypt == "y" && $platform == "EFI" ]]; then
         echo "rd.luks.name=${LUKS_UUID}=cryptlvm root=/dev/archvolume/root rw" > /etc/kernel/cmdline
-    else 
+    else
         echo "root=/dev/mapper/archvolume-root rw" > /etc/kernel/cmdline
     fi
 }
@@ -117,6 +93,8 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 
+localization="en_US.UTF-8 UTF-8"
+
 sed -i "s/^#${localization}/${localization}/" /etc/locale.gen
 
 locale-gen
@@ -158,6 +136,4 @@ else
 fi
 
 # generate
-mkinitcpio -p linux-lts
-
-echo "Finished 1-preinstall.sh"
+mkinitcpio -P

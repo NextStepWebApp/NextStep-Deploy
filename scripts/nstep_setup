@@ -1,0 +1,52 @@
+#!/bin/bash
+
+echo -ne "
+-------------------------------------------------------------------------
+                        pacman configuration
+-------------------------------------------------------------------------
+"
+sed -i 's/^#Color/Color/' /etc/pacman.conf
+sed -i '/^Color$/a ILoveCandy' /etc/pacman.conf
+
+
+
+cat >> /etc/pacman.conf <<'EOF'
+
+[nstep-arch-repo]
+SigLevel = Optional TrustAll
+Server = https://github.com/NextStepWebApp/nstep-arch-repo/raw/refs/heads/main/\$arch
+EOF
+
+
+while true; do
+        if ! pacman -Syyu --noconfirm; then
+            echo " -> Failed to update"
+            echo "Retrying..."
+        else
+            break
+        fi
+    done
+}
+
+package_name="nstep-git"
+
+while true; do
+        if ! pacman -S --noconfirm --needed $package_name; then
+            echo " -> Failed to install: $pkgs"
+            echo "Retrying..."
+        else
+            echo " -> Installed $pkgs"
+            break
+        fi
+    done
+}
+
+clear
+
+echo -ne "
+-------------------------------------------------------------------------
+                            Networking
+-------------------------------------------------------------------------
+
+"
+systemctl enable sshd.service

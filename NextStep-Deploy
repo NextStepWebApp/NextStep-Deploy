@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Find the name of the folder the scripts are in
+set -a
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPTS_DIR="$SCRIPT_DIR/scripts"
+set +a
+chmod +x ${SCRIPTS_DIR}/*
+
+clear
+
+echo -ne "
+------------------------------------------------------------------------------
+ _   _            _   ____  _                  ____             _
+| \ | | _____  _ | |_/ ___|| |_ ___ _ __      |  _ \  ___ _ __ | | ___  _   _
+|  \| |/ _ \ \/ / __\___ \| __/ _ \ '_ \ _____| | | |/ _ \ '_ \| |/ _ \| | | |
+| |\  |  __/>  <| |_ ___) | ||  __/ |_) |_____| |_| |  __/ |_) | | (_) | |_| |
+|_| \_|\___/_/\_\\__|____/ \__\___| .__/      |____/ \___| .__/|_|\___/ \__, |
+                                 |_|                    |_|            |___/
+------------------------------------------------------------------------------
+              Automated Arch Linux Installer for NextStep
+------------------------------------------------------------------------------
+"
+
+sleep 1
+
+( bash $SCRIPTS_DIR/user_setup )|& tee user_setup.log
+( bash $SCRIPTS_DIR/disk_package )|& tee disk_package.log
+
+
+( arch-chroot /mnt /opt/NextStep-Deploy/scripts/platform_user )|& tee platform_user.log
+( arch-chroot /mnt /opt/NextStep-Deploy/scripts/nstep_setup )|& tee nstep_setup.log
+( arch-chroot /mnt /opt/NextStep-Deploy/scripts/tools )|& tee tools.log
+
+# Copy everything again after the installation
+# To get the complete log files on the host
+cp -r "$SCRIPT_DIR"/* /mnt/opt/NextStep-Deploy/
+
+# unmount all the mount points
+umount -R /mnt 2>/dev/null
+
+clear
+
+
+echo -ne "
+------------------------------------------------------------------------------
+ _   _            _   ____  _                  ____             _
+| \ | | _____  _ | |_/ ___|| |_ ___ _ __      |  _ \  ___ _ __ | | ___  _   _
+|  \| |/ _ \ \/ / __\___ \| __/ _ \ '_ \ _____| | | |/ _ \ '_ \| |/ _ \| | | |
+| |\  |  __/>  <| |_ ___) | ||  __/ |_) |_____| |_| |  __/ |_) | | (_) | |_| |
+|_| \_|\___/_/\_\\__|____/ \__\___| .__/      |____/ \___| .__/|_|\___/ \__, |
+                                 |_|                    |_|            |___/
+------------------------------------------------------------------------------
+              Automated Arch Linux Installer for NextStep
+------------------------------------------------------------------------------
+"
+
+sleep 1
+
+echo -ne "
+------------------------------------------------------------------------------
+                    Installation finished!
+------------------------------------------------------------------------------
+"
+
+echo ""
+echo ""
+echo "Please reboot your Installation"
